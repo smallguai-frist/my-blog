@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 个人博客</title>
+    <style>
+        /* 简单的页面美化，不影响功能 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        h2 { text-align: center; margin-bottom: 30px; color: #333; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #555; }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #40a9ff; }
+        .error { color: red; margin-top: 10px; text-align: center; }
+        .register-link { text-align: center; margin-top: 15px; }
+        a { color: #1890ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>登录博客</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="请输入密码" required>
+            </div>
+            <button type="submit">登录</button>
+        </form>
+        <div id="errorMsg" class="error"></div>
+        <div class="register-link">
+            还没有账号？<a href="register.html">立即注册</a>
+        </div>
+    </div>
+
+    <script>
+        // 获取表单和错误提示元素
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // 监听表单提交事件
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); // 阻止页面刷新
+
+            // 获取用户输入
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // 清空之前的错误提示
+            errorMsg.textContent = '';
+
+            try {
+                // 发送 POST 请求到后端登录接口
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'  // 告诉服务器我发送的是 JSON
+                    },
+                    body: JSON.stringify({ username, password }) // 把 JS 对象转成 JSON 字符串
+                });
+
+                // 如果返回的状态码不是 200-299，说明登录失败
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || '登录失败');
+                }
+
+                // 登录成功，解析返回的数据（里面应该有一个 token 字段）
+                const data = await response.json();
+                
+                // 把 token 存到 localStorage 里，以后所有需要登录的请求都要带上它
+                localStorage.setItem('token', data.token);
+                // 也可以存一下用户名，方便首页显示
+                localStorage.setItem('username', username);
+
+                // 跳转到首页
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                // 在页面上显示错误信息
+                errorMsg.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>
